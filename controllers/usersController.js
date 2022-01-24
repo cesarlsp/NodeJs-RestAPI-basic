@@ -1,62 +1,98 @@
 const { response, request } = require('express');
 
-const getUsers = (request, response) => {
+const bcryptjs = require('bcryptjs');
+const User = require('../models/user');
 
-    // const params =  request.query;
-    const { search, order } =  request.query;
+const getUsers = async(request, response) => {
+
+    const { offset = 0, limit = 5 } =  request.query;
+    const query = { state: true };
+
+    const [ total, users] = await Promise.all([
+        User.countDocuments( query ),
+        User.find( query )
+            .skip( Number( offset ) )
+            .limit( Number( limit ) )
+    ]);
 
     response.json({
         code: 200,
-        data: [
-            search,
-            order
-        ],
+        data: { 
+            total,
+            users
+        },
         message: 'Get users controller'
     });
 }
 
-const postUsers = (request, res) => {
+const postUsers = async(request, response) => {
 
-    const { nombre, edad } = request.body;
+    const { name, email, password, role } = request.body;
+    const user = new User( { name, email, password, role } );
 
-    res.json({
+    // Encriptar contraseña
+    const salt = bcryptjs.genSaltSync();
+    user.password = bcryptjs.hashSync( password, salt );
+    
+    // guardar en base de datos
+    await user.save();
+
+    response.json({
         code: 200,
         data: [
-            nombre,
-            edad
+            user
         ],
         message: 'Post users controller'
     });
 }
 
-const putUsers = (request, res) => {
+const putUsers = async(request, response) => {
 
     const { userId } = request.params;
-    const { nombre, edad } = request.body;
+    const { _id, password, google, email, ...otherData } = request.body;
 
-    res.json({
+    // validar contra base de datos
+    if ( password ) {
+        // Encriptar contraseña
+        const salt = bcryptjs.genSaltSync();
+        otherData.password = bcryptjs.hashSync( password, salt );
+    }
+
+    const user = await User.findByIdAndUpdate( userId, otherData );
+
+    response.json({
         code: 200,
         data: [
-            userId,
-            nombre,
-            edad
+            user
         ],
         message: 'Put users controller'
     });
 }
 
-const patchUsers = (request, res) => {
-    res.json({
+const patchUsers = (request, response) => {
+    response.json({
         code: 200,
         data: [],
         message: 'Patch users controller'
     });
 }
 
-const deleteUsers = (request, res) => {
-    res.json({
+const deleteUsers = async(request, response) => {
+
+    const { userId } = request.params;
+
+    // Borrado fisicamente
+    // const user = await User.findByIdAndDelete( userId );
+    
+    // Borrado logico
+    const user = await User.findByIdAndUpdate( userId, { state: false } );
+
+
+    response.json({
         code: 200,
-        data: [],
+        data: [
+            user
+        ],
         message: 'Delete users controller'
     });
 }
