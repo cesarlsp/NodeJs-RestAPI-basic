@@ -39,9 +39,9 @@ const postUsers = async(request, response) => {
 
     response.json({
         code: 200,
-        data: [
+        data: {
             user
-        ],
+        },
         message: 'Post users controller'
     });
 }
@@ -62,9 +62,9 @@ const putUsers = async(request, response) => {
 
     response.json({
         code: 200,
-        data: [
+        data: {
             user
-        ],
+        },
         message: 'Put users controller'
     });
 }
@@ -72,7 +72,7 @@ const putUsers = async(request, response) => {
 const patchUsers = (request, response) => {
     response.json({
         code: 200,
-        data: [],
+        data: {},
         message: 'Patch users controller'
     });
 }
@@ -81,18 +81,19 @@ const deleteUsers = async(request, response) => {
 
     const { userId } = request.params;
 
-    // Borrado fisicamente
-    // const user = await User.findByIdAndDelete( userId );
-    
+    // const authenticatedUser = request.authenticatedUser;
+
+    // const user = await User.findByIdAndDelete( userId ); // ########## Borrado fisicamente ############
     // Borrado logico
     const user = await User.findByIdAndUpdate( userId, { state: false } );
-
+    user.state = false;
 
     response.json({
         code: 200,
-        data: [
+        data: {
             user
-        ],
+            // authenticatedUser
+        },
         message: 'Delete users controller'
     });
 }
